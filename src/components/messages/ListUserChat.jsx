@@ -165,7 +165,7 @@ const ListUserChat = ({
                           whiteSpace: "nowrap",
                           overflow: "hidden",
                           textOverflow: "ellipsis",
-                          maxWidth: isMobile ? 100 : 200,
+                          maxWidth: isMobile ? 100 : 160,
                         }}
                         variant="body2"
                         color="gray"
