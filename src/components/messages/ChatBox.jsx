@@ -171,7 +171,7 @@ const ChatBox = () => {
 
   useEffect(() => {
     fetchMessages(false);
-  }, [roomChat?._id]);
+  }, [roomChat?._id, isFirstLoad === "first"]);
   const handleChangeText = (value) => {
     const currentlyTyping = value.trim() !== "";
 

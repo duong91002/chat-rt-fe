@@ -61,8 +61,12 @@ const ListUserChat = ({
   };
   const fetchRoom = async (userChoose) => {
     const { data } = await getRoomByIdApi(userChoose._id);
-    setRoomChat(data);
-    setIsFirstLoad("first");
+    if (data) {
+      setRoomChat(data);
+      setIsFirstLoad("first");
+    } else {
+      setRoomChat(null);
+    }
   };
 
   const debouncedSearch = useMemo(() => debounce(fetchUsers, 500), []);
