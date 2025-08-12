@@ -40,6 +40,7 @@ const ChatBox = () => {
     senderName: "",
     isTyping: false,
   });
+  const [isJoinRoom, setIsJoinRoom] = useState(false);
   const { user } = useAuthStore();
   const messageBoxRef = useRef(null);
   const bottomRef = useRef(null);
@@ -171,7 +172,7 @@ const ChatBox = () => {
 
   useEffect(() => {
     fetchMessages(false);
-  }, [roomChat?._id, isFirstLoad === "first"]);
+  }, [isJoinRoom]);
   const handleChangeText = (value) => {
     const currentlyTyping = value.trim() !== "";
 
@@ -190,7 +191,7 @@ const ChatBox = () => {
 
   const handleSetJoinRoom = async (roomId, receiverId) => {
     setIsFirstLoad("first");
-
+    setIsJoinRoom(true);
     getSocket().emit("join_room", {
       roomId: roomId,
       receiverId: receiverId,
