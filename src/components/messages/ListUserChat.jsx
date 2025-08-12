@@ -95,9 +95,9 @@ const ListUserChat = ({
     handleDrawer(false);
   };
   const handleSetChat = (data) => {
-    handleSetJoinRoom(data?._id, data.users[0]?._id);
     setUserChat(data.users[0]);
     setRoomChat(data);
+    handleSetJoinRoom(data?._id, data.users[0]?._id);
     handleDrawer(false);
   };
   return (
