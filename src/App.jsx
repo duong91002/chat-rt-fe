@@ -5,6 +5,7 @@ import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import CommonModal from "./components/modals/CommonModal";
 import CommonToast from "./components/toasts/CommonToast";
+import useNotification from "./hooks/useNotification";
 
 const theme = createTheme({
   colorSchemes: {
@@ -12,6 +13,7 @@ const theme = createTheme({
   },
 });
 function App() {
+  useNotification();
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />

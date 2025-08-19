@@ -22,6 +22,7 @@ import ChatInput from "./ChatInput";
 import ChatEmpty from "./ChatEmpty";
 import ChatHeader from "./ChatHeader";
 import ChatMessageItem from "./ChatMessageItem";
+import { notify } from "../../hooks/useNotification";
 
 const ChatBox = () => {
   const theme = useTheme();
@@ -44,7 +45,6 @@ const ChatBox = () => {
   const { user } = useAuthStore();
   const messageBoxRef = useRef(null);
   const bottomRef = useRef(null);
-
   const toolbarHeight = useMemo(() => {
     const heightHeader = isMobile ? 56 + 8 : 64 + 32;
     return heightHeader;
@@ -220,6 +220,7 @@ const ChatBox = () => {
       receiverId: userChat._id,
       typeChat: "text",
       isNewRoom: isNewRoom,
+      senderName: user.name,
     };
     if (!isNewRoom) {
       getSocket().emit("typing", {
