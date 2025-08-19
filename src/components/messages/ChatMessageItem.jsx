@@ -4,6 +4,36 @@ import React from "react";
 const ChatMessageItem = ({ msg, userId, isMobile }) => {
   const isMine = msg.senderId === userId;
 
+  const renderContent = () => {
+    if (msg.typeChat === "image") {
+      return (
+        <img
+          src={msg.message}
+          alt="image"
+          style={{
+            maxWidth: 200,
+            borderRadius: 8,
+            display: "block",
+          }}
+        />
+      );
+    } else if (msg.typeChat === "video") {
+      return (
+        <video
+          src={msg.message}
+          controls
+          style={{
+            maxWidth: 200,
+            borderRadius: 8,
+            display: "block",
+          }}
+        />
+      );
+    } else {
+      return <Typography variant="body2">{msg.message}</Typography>;
+    }
+  };
+
   return (
     <Box
       display="flex"
@@ -23,7 +53,7 @@ const ChatMessageItem = ({ msg, userId, isMobile }) => {
         maxWidth={isMobile ? 200 : 500}
         sx={{ wordBreak: "break-word" }}
       >
-        <Typography variant="body2">{msg.message}</Typography>
+        {renderContent()}
       </Box>
 
       {isMine && (

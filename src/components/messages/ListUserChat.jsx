@@ -12,7 +12,13 @@ import {
   IconButton,
   CircularProgress,
 } from "@mui/material";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTheme } from "@mui/material/styles";
 import CloseFullscreenIcon from "@mui/icons-material/CloseFullscreen";
 import debounce from "lodash.debounce";
@@ -30,6 +36,7 @@ const ListUserChat = ({
   open,
   handleDrawer,
   setIsFirstLoad,
+  setRooms,
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
@@ -40,6 +47,49 @@ const ListUserChat = ({
   const [loading, setLoading] = useState(false);
   const inputRef = useRef(null);
   const { user } = useAuthStore();
+  const listRef = useRef(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  const fetchMoreRooms = async () => {
+    if (!hasMore || loadingMore) return;
+
+    setLoadingMore(true);
+    try {
+      const { data, totalPages } = await getUserRooms(page + 1, 10, user._id);
+      if (data.length === 0 || page + 1 > totalPages) {
+        setHasMore(false);
+      } else {
+        setRooms((prev) => [...prev, ...data]);
+        setPage((prev) => prev + 1);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const box = listRef.current;
+      if (!box) return;
+
+      if (box.scrollHeight - box.scrollTop - box.clientHeight < 50) {
+        fetchMoreRooms();
+      }
+    };
+
+    const box = listRef.current;
+    if (box) {
+      box.addEventListener("scroll", handleScroll);
+    }
+
+    return () => {
+      if (box) box.removeEventListener("scroll", handleScroll);
+    };
+  }, [rooms, page, hasMore, loadingMore]);
 
   const fetchUsers = async (keyword) => {
     if (!keyword) {
@@ -100,6 +150,27 @@ const ListUserChat = ({
     handleSetJoinRoom(data?._id, data.users[0]?._id);
     handleDrawer(false);
   };
+  const getLastMessage = useCallback(
+    (data) => {
+      if (!data?.lastMessage) return "";
+
+      const { typeChat, message, senderId } = data.lastMessage;
+
+      const isMine = senderId?._id === user?._id;
+
+      const typeLabel = {
+        image: "[Image]",
+        video: "[Video]",
+      };
+      console.log(typeLabel[typeChat]);
+
+      return isMine
+        ? `You: ${typeLabel[typeChat] || message}`
+        : typeLabel[typeChat] || message;
+    },
+    [roomChat?.lastMessage]
+  );
+
   return (
     <Box
       width={open ? "100%" : 280}
@@ -187,45 +258,24 @@ const ListUserChat = ({
       </ClickAwayListener>
 
       <List>
-        {rooms &&
-          rooms.map((data, index) => (
-            <ListItemButton
-              sx={{
-                paddingLeft: 0,
-              }}
-              key={index}
-              onClick={() => handleSetChat(data)}
-            >
-              <Avatar src={""} />
-              <Box
-                ml={1}
-                sx={{
-                  display: "flex",
-                  flexDirection: "column",
-                  justifyItems: "center",
-                  alignItems: "flex-start",
-                }}
-              >
-                <Typography fontWeight="bold">
-                  {data.name || showNameUser(data.users)}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="gray"
-                  sx={{
-                    whiteSpace: "nowrap",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    maxWidth: isMobile ? 200 : 120,
-                  }}
-                >
-                  {data?.lastMessage?.senderId?._id === user?._id
-                    ? "You: " + data.lastMessage.message
-                    : data?.lastMessage?.message}
-                </Typography>
-              </Box>
-            </ListItemButton>
-          ))}
+        {rooms.map((data, index) => (
+          <ListItemButton key={index} onClick={() => handleSetChat(data)}>
+            <Avatar src={""} />
+            <Box ml={1} display="flex" flexDirection="column">
+              <Typography fontWeight="bold">
+                {data.name || showNameUser(data.users)}
+              </Typography>
+              <Typography variant="body2" color="gray" noWrap>
+                {getLastMessage(data)}
+              </Typography>
+            </Box>
+          </ListItemButton>
+        ))}
+        {loadingMore && (
+          <Box display="flex" justifyContent="center" p={2}>
+            <CircularProgress size={24} />
+          </Box>
+        )}
       </List>
     </Box>
   );

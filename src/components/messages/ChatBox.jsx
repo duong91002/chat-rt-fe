@@ -23,6 +23,7 @@ import ChatEmpty from "./ChatEmpty";
 import ChatHeader from "./ChatHeader";
 import ChatMessageItem from "./ChatMessageItem";
 import { notify } from "../../hooks/useNotification";
+import { uploadFilesApi } from "../../services/uploadService";
 
 const ChatBox = () => {
   const theme = useTheme();
@@ -87,6 +88,7 @@ const ChatBox = () => {
     return {
       senderId: { _id: message.senderId },
       message: message.message,
+      typeChat: message.typeChat,
       updatedAt: Date.now(),
     };
   };
@@ -172,7 +174,7 @@ const ChatBox = () => {
 
   useEffect(() => {
     fetchMessages(false);
-  }, [isJoinRoom]);
+  }, [isJoinRoom, userChat]);
   const handleChangeText = (value) => {
     const currentlyTyping = value.trim() !== "";
 
@@ -248,6 +250,27 @@ const ChatBox = () => {
     setIsFirstLoad("chat");
     setText("");
   };
+  const handleUploadFiles = async (files) => {
+    try {
+      const uploadedFiles = await uploadFilesApi(files);
+      console.log(uploadedFiles);
+      uploadedFiles.forEach((file) => {
+        const msg = {
+          message: file.url,
+          roomId: roomChat._id,
+          senderId: user._id,
+          receiverId: userChat._id,
+          typeChat: "image",
+          isNewRoom: false,
+          senderName: user.name,
+        };
+        getSocket().emit("send_message", msg);
+        sortRooms(roomChat._id, parseLastMessage(msg));
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  };
   const sortRooms = (roomId, lastMessage) => {
     setRooms((prevRooms) => {
       const isRoomExist = prevRooms.some((room) => room._id === roomId);
@@ -304,6 +327,7 @@ const ChatBox = () => {
           rooms={rooms}
           open={open}
           handleDrawer={handleDrawer}
+          setRooms={setRooms}
           setIsFirstLoad={setIsFirstLoad}
         />
       )}
@@ -354,6 +378,7 @@ const ChatBox = () => {
               text={text}
               onSend={handleSend}
               onTyping={handleChangeText}
+              onUploadFiles={handleUploadFiles}
             />
           </Box>
         ) : (
