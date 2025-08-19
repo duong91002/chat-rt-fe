@@ -32,10 +32,10 @@ const ChatEmpty = ({ isMobile, onMenuClick }) => {
         }}
       >
         <Typography variant="h6" gutterBottom>
-          Chưa chọn người chat
+          No chat selected
         </Typography>
         <Typography variant="body2">
-          Vui lòng chọn một người ở danh sách bên trái để bắt đầu trò chuyện
+          Please select a user from the list on the left to start chatting
         </Typography>
       </Box>
     </Box>

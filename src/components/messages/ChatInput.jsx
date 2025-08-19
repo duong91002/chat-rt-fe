@@ -23,7 +23,7 @@ const ChatInput = ({ text, onSend, onTyping }) => {
       >
         <InputBase
           sx={{ flex: 1, fontSize: 14 }}
-          placeholder="Nhập tin nhắn..."
+          placeholder="Type a message..."
           multiline
           maxRows={4}
           value={text}

@@ -272,7 +272,7 @@ const ChatBox = () => {
     if (userTyping.isTyping) {
       return (
         <Typography variant="body2" color="primary" textAlign={"end"}>
-          {userTyping.senderName} đang nhập...
+          {userTyping.senderName} is typing...
         </Typography>
       );
     }
@@ -330,7 +330,7 @@ const ChatBox = () => {
               <div>
                 {loadingMore && (
                   <div className="flex justify-center items-center text-center">
-                    Đang tải
+                    Loading...
                     <CircularProgress size={24} style={{ marginLeft: 8 }} />
                   </div>
                 )}

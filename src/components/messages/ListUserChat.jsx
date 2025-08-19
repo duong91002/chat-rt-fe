@@ -54,7 +54,7 @@ const ListUserChat = ({
       setUsers(data);
       setShowDropdown(true);
     } catch (error) {
-      console.error("Lỗi tìm kiếm người dùng:", error);
+      console.error("Error searching users:", error);
     } finally {
       setLoading(false);
     }
@@ -115,7 +115,7 @@ const ListUserChat = ({
         justifyContent="space-between"
         mb={2}
       >
-        <Typography variant="h6">Bạn bè</Typography>
+        <Typography variant="h6">Friends</Typography>
         {isMobile && (
           <IconButton onClick={() => handleDrawer(false)}>
             <CloseFullscreenIcon />
@@ -127,7 +127,7 @@ const ListUserChat = ({
         <Box position="relative">
           <TextField
             fullWidth
-            placeholder="Tìm kiếm..."
+            placeholder="Search..."
             size="small"
             variant="outlined"
             value={search}
@@ -180,7 +180,7 @@ const ListUserChat = ({
                   </ListItemButton>
                 ))
               ) : (
-                <Box p={2}>Không tìm thấy người dùng</Box>
+                <Box p={2}>No users found</Box>
               ))}
           </Paper>
         </Box>
@@ -220,7 +220,7 @@ const ListUserChat = ({
                   }}
                 >
                   {data?.lastMessage?.senderId?._id === user?._id
-                    ? "Bạn: " + data.lastMessage.message
+                    ? "You: " + data.lastMessage.message
                     : data?.lastMessage?.message}
                 </Typography>
               </Box>

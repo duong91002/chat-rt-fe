@@ -12,42 +12,34 @@ import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
+import useToastStore from "../store/toastStore";
 
 const RegisterSchema = Yup.object().shape({
   name: Yup.string()
-    .required("Vui lòng nhập họ tên")
-    .max(10, "Tên chỉ được tối đa 10 ký tự"),
+    .required("Please enter your full name")
+    .max(10, "Name can be at most 10 characters"),
   email: Yup.string()
-    .email("Email không hợp lệ")
-    .required("Vui lòng nhập email"),
+    .email("Invalid email")
+    .required("Please enter your email"),
   password: Yup.string()
-    .min(6, "Mật khẩu quá ngắn")
-    .required("Vui lòng nhập mật khẩu"),
+    .min(6, "Password is too short")
+    .required("Please enter your password"),
   confirmPassword: Yup.string()
-    .oneOf([Yup.ref("password")], "Mật khẩu không khớp")
-    .required("Vui lòng xác nhận mật khẩu"),
+    .oneOf([Yup.ref("password")], "Passwords do not match")
+    .required("Please confirm your password"),
 });
 
 const Register = () => {
   const navigate = useNavigate();
   const { register } = useAuthStore();
-
-  const [alertMessage, setAlertMessage] = useState("");
-  const [alertType, setAlertType] = useState("success");
-  const [openSnackbar, setOpenSnackbar] = useState(false);
-
-  const handleCloseSnackbar = (_, reason) => {
-    if (reason === "clickaway") return;
-    setOpenSnackbar(false);
-  };
+  const { showToast } = useToastStore();
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen ">
+    <div className="flex flex-col items-center justify-center h-screen">
       <Box
         sx={{
           height: 680,
           width: 480,
-
           display: "flex",
           alignItems: "center",
           p: 6,
@@ -70,27 +62,12 @@ const Register = () => {
             textTransform: "none",
           }}
         >
-          ← Quay lại đăng nhập
+          ← Back to Login
         </Button>
 
         <Typography variant="h5" fontWeight="bold" sx={{ marginBottom: 1 }}>
-          Đăng ký tài khoản
+          Create an Account
         </Typography>
-
-        <Snackbar
-          open={openSnackbar}
-          autoHideDuration={4000}
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: "top", horizontal: "right" }}
-        >
-          <Alert
-            onClose={handleCloseSnackbar}
-            severity={alertType}
-            sx={{ width: "100%" }}
-          >
-            {alertMessage}
-          </Alert>
-        </Snackbar>
 
         <Formik
           initialValues={{
@@ -103,18 +80,14 @@ const Register = () => {
           onSubmit={async (values, { setSubmitting }) => {
             const { confirmPassword, ...submitValues } = values;
 
-            const data = await register(submitValues);
+            const { token, error } = await register(submitValues);
 
             setSubmitting(false);
-            if (!data) {
-              setAlertMessage("Đăng ký thất bại. Vui lòng thử lại.");
-              setAlertType("error");
-              setOpenSnackbar(true);
+            if (error) {
+              showToast(error, "error");
               return;
             }
-            setAlertMessage("Đăng ký thành công!");
-            setAlertType("success");
-            setOpenSnackbar(true);
+            showToast("Registration successful!", "success");
             navigate("/");
           }}
         >
@@ -128,7 +101,7 @@ const Register = () => {
           }) => (
             <Form className="gap-5 flex flex-col w-full">
               <TextField
-                label="Họ tên"
+                label="Full Name"
                 name="name"
                 value={values.name}
                 onChange={handleChange}
@@ -153,7 +126,7 @@ const Register = () => {
               />
 
               <TextField
-                label="Mật khẩu"
+                label="Password"
                 name="password"
                 type="password"
                 value={values.password}
@@ -165,7 +138,7 @@ const Register = () => {
               />
 
               <TextField
-                label="Xác nhận mật khẩu"
+                label="Confirm Password"
                 name="confirmPassword"
                 type="password"
                 value={values.confirmPassword}
@@ -181,7 +154,7 @@ const Register = () => {
               {isSubmitting && <LinearProgress />}
 
               <Button variant="contained" type="submit" disabled={isSubmitting}>
-                Đăng ký
+                Register
               </Button>
             </Form>
           )}

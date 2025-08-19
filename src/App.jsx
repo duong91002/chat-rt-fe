@@ -3,6 +3,8 @@ import AppRoutes from "./routes";
 import "./App.css";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
+import CommonModal from "./components/modals/CommonModal";
+import CommonToast from "./components/toasts/CommonToast";
 
 const theme = createTheme({
   colorSchemes: {
@@ -13,6 +15,8 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
+      <CommonModal />
+      <CommonToast />
       <AppRoutes />
     </ThemeProvider>
   );

@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Login from "../pages/Login";
 import Register from "../pages/Register";
 import ProtectedRoute from "./ProtectedRoute";
@@ -12,6 +12,7 @@ export default function AppRoutes() {
       <Routes>
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<MainLayout />}>
+            <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard" element={<DashboardPage />} />
             <Route path="messages" element={<MessagePage />} />
           </Route>

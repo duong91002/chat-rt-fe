@@ -12,28 +12,23 @@ import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
 import useAuthStore from "../store/authStore";
+import useToastStore from "../store/toastStore";
 
 const LoginSchema = Yup.object().shape({
   email: Yup.string()
-    .email("Email không hợp lệ")
-    .required("Vui lòng nhập email"),
+    .email("Invalid email")
+    .required("Please enter your email"),
   password: Yup.string()
-    .min(6, "Mật khẩu quá ngắn")
-    .required("Vui lòng nhập mật khẩu"),
+    .min(6, "Password is too short")
+    .required("Please enter your password"),
 });
 
 const Login = () => {
   const navigate = useNavigate();
   const { login } = useAuthStore();
-
-  const [alertMessage, setAlertMessage] = useState("");
-  const [alertType, setAlertType] = useState("success");
-  const [openAlert, setOpenAlert] = useState(false);
-
-  const handleCloseAlert = () => setOpenAlert(false);
-
+  const { showToast } = useToastStore();
   return (
-    <div className="flex flex-col items-center justify-center h-screen ">
+    <div className="flex flex-col items-center justify-center h-screen">
       <Box
         sx={{
           height: 580,
@@ -49,39 +44,22 @@ const Login = () => {
         }}
       >
         <Typography variant="h5" fontWeight="bold" sx={{ marginBottom: 2 }}>
-          Đăng nhập
+          Login
         </Typography>
-
-        <Snackbar
-          open={openAlert}
-          autoHideDuration={4000}
-          onClose={handleCloseAlert}
-          anchorOrigin={{ vertical: "top", horizontal: "right" }}
-        >
-          <Alert
-            onClose={handleCloseAlert}
-            severity={alertType}
-            sx={{ width: "100%" }}
-          >
-            {alertMessage}
-          </Alert>
-        </Snackbar>
 
         <Formik
           initialValues={{ email: "", password: "" }}
           validationSchema={LoginSchema}
           onSubmit={async (values, { setSubmitting }) => {
-            const data = await login(values);
+            const { token, error } = await login(values);
             setSubmitting(false);
-            if (!data) {
-              setAlertMessage("Đăng nhập thất bại. Vui lòng thử lại.");
-              setAlertType("error");
-              setOpenAlert(true);
+
+            if (error) {
+              showToast(error, "error");
               return;
             }
-            setAlertMessage("Đăng nhập thành công!");
-            setAlertType("success");
-            setOpenAlert(true);
+
+            showToast("Login successful!", "success");
             navigate("/");
           }}
         >
@@ -109,7 +87,7 @@ const Login = () => {
               />
 
               <TextField
-                label="Mật khẩu"
+                label="Password"
                 name="password"
                 type="password"
                 value={values.password}
@@ -123,7 +101,7 @@ const Login = () => {
               {isSubmitting && <LinearProgress />}
 
               <Button variant="contained" type="submit" disabled={isSubmitting}>
-                Đăng nhập
+                Login
               </Button>
               <Button
                 variant="text"
@@ -132,7 +110,7 @@ const Login = () => {
                   navigate("/register");
                 }}
               >
-                Chưa có tài khoản? Đăng ký
+                Don’t have an account? Register
               </Button>
             </Form>
           )}

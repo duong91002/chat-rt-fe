@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 const DashboardPage = () => {
   const navigate = useNavigate();
   return (
-    <div className="h-[1000px]">
+    <div>
       <Button onClick={() => navigate("/")}>test</Button>
     </div>
   );

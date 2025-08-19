@@ -18,6 +18,7 @@ import useMediaQuery from "@mui/material/useMediaQuery";
 
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import useAuthStore from "../store/authStore";
+import useModalStore from "../store/modalStore";
 
 const drawerWidth = 240;
 const openedMixin = (theme) => ({
@@ -64,10 +65,18 @@ const DrawerList = ({ open, handleDrawerClose, DrawerHeader }) => {
   const navigate = useNavigate();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const { user, logout } = useAuthStore();
+  const confirmModal = useModalStore.getState();
 
   const handleLogout = () => {
-    logout();
-    navigate("/login");
+    confirmModal.open({
+      title: "Confirm Logout",
+      message: "Are you sure you want to logout?",
+      onConfirm: () => {
+        logout();
+        navigate("/login");
+      },
+      onCancel: () => {},
+    });
   };
 
   return (
@@ -146,7 +155,7 @@ const DrawerList = ({ open, handleDrawerClose, DrawerHeader }) => {
           sx={{ display: "block" }}
           onClick={handleLogout}
         >
-          <Tooltip title={!open ? "Đăng xuất" : ""} placement="right">
+          <Tooltip title={!open ? "Logout" : ""} placement="right">
             <ListItemButton
               sx={{
                 minHeight: 48,

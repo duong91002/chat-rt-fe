@@ -5,6 +5,7 @@ import {
   getInformationApi,
 } from "../services/authService";
 import Cookies from "js-cookie";
+
 const useAuthStore = create((set) => ({
   user: null,
   token: null,
@@ -15,19 +16,16 @@ const useAuthStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       const { data } = await loginApi(body);
-      console.log(data);
       set({ token: data.token, loading: false });
       Cookies.set("access_token", data.token, {
         expires: 1,
-        // secure: true,
         sameSite: "strict",
       });
-      return data.token;
+      return { token: data.token };
     } catch (err) {
-      set({
-        error: err.response?.data?.message || "Đăng nhập thất bại",
-        loading: false,
-      });
+      const errorMsg = err.response?.data?.error || "Login failed";
+      set({ error: errorMsg, loading: false });
+      return { error: errorMsg };
     }
   },
 
@@ -41,14 +39,14 @@ const useAuthStore = create((set) => ({
         // secure: true,
         sameSite: "strict",
       });
-      return data.token;
+      return { token: data.token };
     } catch (err) {
-      set({
-        error: err.response?.data?.message || "Đăng ký thất bại",
-        loading: false,
-      });
+      const errorMsg = err.response?.data?.error || "Registration failed";
+      set({ error: errorMsg, loading: false });
+      return { error: errorMsg };
     }
   },
+
   getInformation: async () => {
     try {
       const token = Cookies.get("access_token");
