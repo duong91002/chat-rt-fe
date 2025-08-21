@@ -13,7 +13,6 @@ const theme = createTheme({
   },
 });
 function App() {
-  useNotification();
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />

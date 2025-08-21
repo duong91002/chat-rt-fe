@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import Cookies from "js-cookie";
 import useAuthStore from "../store/authStore";
+import useNotification from "../hooks/useNotification";
 
 const ProtectedRoute = () => {
   const [loading, setLoading] = useState(true);
@@ -28,6 +29,7 @@ const ProtectedRoute = () => {
     };
 
     checkAuth();
+    useNotification();
   }, [getInformation]);
 
   if (loading) return null;
