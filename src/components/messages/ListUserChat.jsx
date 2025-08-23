@@ -25,71 +25,73 @@ import debounce from "lodash.debounce";
 import { getAllUserApi } from "../../services/userService";
 import useAuthStore from "../../store/authStore";
 import { getRoomByIdApi } from "../../services/roomService";
+import useMessageStore from "../../store/messageStore";
+import { useRoomStore } from "../../store/roomStore";
+import { showNameUser } from "../../utils";
 
-const ListUserChat = ({
-  roomChat,
-  setUserChat,
-  setRoomChat,
-  handleSetJoinRoom,
-  setMessages,
-  rooms,
-  open,
-  handleDrawer,
-  setIsFirstLoad,
-  setRooms,
-}) => {
+const ListUserChat = ({ open, handleDrawer }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [active, setActive] = useState(null);
+  const {
+    rooms,
+    addRooms,
+    fetchRooms: fetch,
+    loading: { rooms: loadingRooms },
+    setRoom,
+    room,
+  } = useRoomStore();
 
   const [search, setSearch] = useState("");
   const [users, setUsers] = useState([]);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const inputRef = useRef(null);
   const { user } = useAuthStore();
   const listRef = useRef(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
+  const fetchRooms = async (loadMore = false) => {
+    const currentPage = loadMore ? page + 1 : 1;
+    if (rooms.length > 0 && !loadMore) return;
 
-  const fetchMoreRooms = async () => {
-    if (!hasMore || loadingMore) return;
+    const data = await fetch({
+      userId: user._id,
+      page: currentPage,
+      limit: 20,
+    });
 
-    setLoadingMore(true);
-    try {
-      const { data, totalPages } = await getUserRooms(page + 1, 10, user._id);
-      if (data.length === 0 || page + 1 > totalPages) {
-        setHasMore(false);
-      } else {
-        setRooms((prev) => [...prev, ...data]);
-        setPage((prev) => prev + 1);
+    if (loadMore) {
+      if (data.length === 0) setHasMore(false);
+      else {
+        addRooms(data);
+        setPage(currentPage);
       }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoadingMore(false);
+    } else {
+      setPage(1);
+      setHasMore(true);
     }
   };
+  useEffect(() => {
+    fetchRooms(false);
+  }, []);
 
   useEffect(() => {
-    const handleScroll = () => {
-      const box = listRef.current;
-      if (!box) return;
+    const box = listRef.current;
+    if (!box) return;
 
-      if (box.scrollHeight - box.scrollTop - box.clientHeight < 50) {
-        fetchMoreRooms();
+    const handleScroll = async () => {
+      if (
+        box.scrollHeight - box.scrollTop - box.clientHeight < 50 &&
+        hasMore &&
+        !loadingRooms
+      ) {
+        await fetchRooms(true);
       }
     };
-
-    const box = listRef.current;
-    if (box) {
-      box.addEventListener("scroll", handleScroll);
-    }
-
-    return () => {
-      if (box) box.removeEventListener("scroll", handleScroll);
-    };
-  }, [rooms, page, hasMore, loadingMore]);
+    box.addEventListener("scroll", handleScroll);
+    return () => box.removeEventListener("scroll", handleScroll);
+  }, [rooms, page, hasMore, loadingRooms]);
 
   const fetchUsers = async (keyword) => {
     if (!keyword) {
@@ -97,7 +99,7 @@ const ListUserChat = ({
       return;
     }
 
-    setLoading(true);
+    setLoadingUsers(true);
     const params = { name: keyword };
     try {
       const { data } = await getAllUserApi(params);
@@ -106,16 +108,17 @@ const ListUserChat = ({
     } catch (error) {
       console.error("Error searching users:", error);
     } finally {
-      setLoading(false);
+      setLoadingUsers(false);
     }
   };
-  const fetchRoom = async (userChoose) => {
-    const { data } = await getRoomByIdApi(userChoose._id);
+
+  const fetchRoom = async (filters) => {
+    const { data } = await getRoomByIdApi(filters);
     if (data) {
-      setRoomChat(data);
-      setIsFirstLoad("first");
+      setActive(data._id);
+      setRoom(data);
     } else {
-      setRoomChat(null);
+      setRoom(null);
     }
   };
 
@@ -125,29 +128,18 @@ const ListUserChat = ({
     debouncedSearch(value);
   };
 
-  const showNameUser = (users) => {
-    if (!Array.isArray(users)) return "";
-    if (users.length === 1) return users[0].name;
-    return users.map((u) => u.name).join(", ");
-  };
-
   const handleClickAway = () => {
     setShowDropdown(false);
   };
 
   const handleChooseUser = (userChoose) => {
-    fetchRoom(userChoose);
-    setUserChat(userChoose);
+    fetchRoom({ receiverId: userChoose._id });
     setSearch(userChoose.name);
     setShowDropdown(false);
-    handleSetJoinRoom(roomChat?._id, userChoose._id);
-    setMessages([]);
     handleDrawer(false);
   };
-  const handleSetChat = (data) => {
-    setUserChat(data.users[0]);
-    setRoomChat(data);
-    handleSetJoinRoom(data?._id, data.users[0]?._id);
+  const handleSetChat = (room) => {
+    fetchRoom({ roomId: room._id });
     handleDrawer(false);
   };
   const getLastMessage = useCallback(
@@ -162,13 +154,12 @@ const ListUserChat = ({
         image: "[Image]",
         video: "[Video]",
       };
-      console.log(typeLabel[typeChat]);
 
       return isMine
         ? `You: ${typeLabel[typeChat] || message}`
         : typeLabel[typeChat] || message;
     },
-    [roomChat?.lastMessage]
+    [room?.lastMessage]
   );
 
   return (
@@ -222,7 +213,7 @@ const ListUserChat = ({
             elevation={3}
           >
             {showDropdown &&
-              (loading ? (
+              (loadingUsers ? (
                 <Box p={2} display="flex" justifyContent="center">
                   <CircularProgress size={24} />
                 </Box>
@@ -259,11 +250,17 @@ const ListUserChat = ({
 
       <List>
         {rooms.map((data, index) => (
-          <ListItemButton key={index} onClick={() => handleSetChat(data)}>
+          <ListItemButton
+            sx={{
+              backgroundColor: active === data._id ? "lightgray" : "none",
+            }}
+            key={index}
+            onClick={() => handleSetChat(data)}
+          >
             <Avatar src={""} />
             <Box ml={1} display="flex" flexDirection="column">
               <Typography fontWeight="bold">
-                {data.name || showNameUser(data.users)}
+                {data.name || showNameUser(data.users, user)}
               </Typography>
               <Typography variant="body2" color="gray" noWrap>
                 {getLastMessage(data)}
@@ -271,7 +268,7 @@ const ListUserChat = ({
             </Box>
           </ListItemButton>
         ))}
-        {loadingMore && (
+        {loadingRooms && (
           <Box display="flex" justifyContent="center" p={2}>
             <CircularProgress size={24} />
           </Box>

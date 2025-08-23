@@ -25,32 +25,10 @@ const drawerWidth = 240;
 
 const Header = ({ DrawerHeader }) => {
   const { mode, setMode } = useColorScheme();
-  const { logout } = useAuthStore();
-
   if (!mode) return null;
   const [open, setOpen] = useState(false);
-  const navigate = useNavigate();
-
-  const handleDrawerOpen = () => {
-    setOpen(true);
-  };
-
-  const [anchorElUser, setAnchorElUser] = useState(null);
-
-  const handleCloseUserMenu = (setting) => {
-    setAnchorElUser(null);
-    if (setting === "Logout") {
-      logout();
-      navigate("/login");
-    }
-  };
-
-  const handleOpenUserMenu = (event) => {
-    setAnchorElUser(event.currentTarget);
-  };
-
-  const handleDrawerClose = () => {
-    setOpen(false);
+  const handleDrawerOpen = (isOpen) => {
+    setOpen(isOpen);
   };
 
   const AppBar = styled(MuiAppBar, {
@@ -90,7 +68,7 @@ const Header = ({ DrawerHeader }) => {
             <IconButton
               color="inherit"
               aria-label="open drawer"
-              onClick={handleDrawerOpen}
+              onClick={() => handleDrawerOpen(true)}
               edge="start"
               sx={{
                 ...(open && { display: "none" }),
@@ -124,7 +102,7 @@ const Header = ({ DrawerHeader }) => {
       <DrawerList
         DrawerHeader={DrawerHeader}
         open={open}
-        handleDrawerClose={handleDrawerClose}
+        handleDrawerOpen={handleDrawerOpen}
       />
     </div>
   );

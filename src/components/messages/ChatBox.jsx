@@ -1,120 +1,92 @@
 import {
-  Avatar,
   Box,
-  IconButton,
-  TextField,
   Typography,
   useTheme,
   useMediaQuery,
   CircularProgress,
-  Paper,
-  InputBase,
 } from "@mui/material";
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import SendIcon from "@mui/icons-material/Send";
+import { useEffect, useMemo, useRef, useState } from "react";
 import ListUserChat from "./ListUserChat";
 import useAuthStore from "../../store/authStore";
 import { getSocket } from "../../utils/socket";
 import { createRoomApi, getListRoomsApi } from "../../services/roomService";
 import { getListChatInRoomsApi } from "../../services/messageService";
-import MenuIcon from "@mui/icons-material/Menu";
 import ChatInput from "./ChatInput";
 import ChatEmpty from "./ChatEmpty";
 import ChatHeader from "./ChatHeader";
 import ChatMessageItem from "./ChatMessageItem";
-import { notify } from "../../hooks/useNotification";
 import { uploadFilesApi } from "../../services/uploadService";
+import useMessageStore from "../../store/messageStore";
+import { useRoomStore } from "../../store/roomStore";
+import { showNameUser } from "../../utils";
 
 const ChatBox = () => {
   const theme = useTheme();
+  const { user } = useAuthStore();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
-
-  const [userChat, setUserChat] = useState(null);
-  const [roomChat, setRoomChat] = useState(null);
-  const [messages, setMessages] = useState([]);
+  const {
+    room,
+    setLastMessageInRooms,
+    addRoom,
+    rooms,
+    loading: { messages: loadingMessages },
+    fetchMessagesInRoom,
+    addMessageInRoom,
+    currentPageMessages,
+    totalPagesMessages,
+    setPaginationDefaults,
+  } = useRoomStore();
+  const receiver = useMemo(() => {
+    if (!room) return null;
+    const findUser = room.users.find(
+      (u) => u._id.toString() !== user._id.toString()
+    );
+    return findUser;
+  }, [room]);
   const [text, setText] = useState("");
-  const [rooms, setRooms] = useState([]);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [isFirstLoad, setIsFirstLoad] = useState("first");
   const [userTyping, setUserTyping] = useState({
     senderName: "",
     isTyping: false,
   });
-  const [isJoinRoom, setIsJoinRoom] = useState(false);
-  const { user } = useAuthStore();
+  const [loadingMore, setLoadingMore] = useState(false);
+
   const messageBoxRef = useRef(null);
   const bottomRef = useRef(null);
   const toolbarHeight = useMemo(() => {
     const heightHeader = isMobile ? 56 + 8 : 64 + 32;
     return heightHeader;
   }, [theme, isMobile]);
-
   useEffect(() => {
-    const fetchRooms = async () => {
-      const { data } = await getListRoomsApi();
-      setRooms(data);
-    };
-    fetchRooms();
-  }, []);
+    setPaginationDefaults();
+    handleScrollMessage();
+  }, [room?._id]);
 
-  const fetchMessages = async (loadMore = false) => {
-    if (!roomChat?._id) {
-      setMessages([]);
+  const fetchMessages = async () => {
+    if (currentPageMessages > totalPagesMessages) {
       return;
     }
-
-    const currentPage = loadMore ? page + 1 : 1;
-    const { data } = await getListChatInRoomsApi({
-      roomId: roomChat._id,
+    if (!room?._id) {
+      return;
+    }
+    const currentPage = currentPageMessages + 1;
+    await fetchMessagesInRoom({
+      roomId: room._id,
       page: currentPage,
       limit: 20,
     });
-
-    if (loadMore) {
-      if (data.length === 0) setHasMore(false);
-      else {
-        setMessages((prev) => [...data, ...prev]);
-        setPage(currentPage);
-      }
-    } else {
-      setMessages(data);
-      setPage(1);
-      setHasMore(true);
-    }
   };
-  const parseLastMessage = (message) => {
-    return {
-      senderId: { _id: message.senderId },
-      message: message.message,
-      typeChat: message.typeChat,
-      updatedAt: Date.now(),
-    };
-  };
-
-  useEffect(() => {
+  const handleScrollMessage = () => {
     if (bottomRef.current) {
-      if (isFirstLoad === "first" || isFirstLoad === "chat")
-        bottomRef.current.scrollIntoView({ behavior: "auto" });
-      setIsFirstLoad("stop");
+      bottomRef.current.scrollIntoView({ behavior: "auto" });
     }
-  }, [messages]);
+  };
 
   useEffect(() => {
-    const handleReceiveMessage = (message) => {
-      setMessages((prev) => [...prev, message]);
-      setRooms((prevRooms) => {
-        return prevRooms.map((room) => {
-          if (room._id === message.roomId) {
-            return {
-              ...room,
-              lastMessage: parseLastMessage(message),
-            };
-          }
-          return room;
-        });
-      });
+    const handleReceiveMessage = ({ roomData, message }) => {
+      if (room?._id === roomData._id) {
+        addMessageInRoom(message);
+      }
+      setLastMessageInRooms(roomData, message);
     };
 
     getSocket().on("receive_message", handleReceiveMessage);
@@ -125,40 +97,22 @@ const ChatBox = () => {
 
     getSocket().on("receive_typing", handleReceiveTyping);
 
-    const handleNewChatUser = ({ room, message }) => {
-      setRooms((prevRooms) => {
-        return [
-          {
-            ...room,
-            lastMessage: parseLastMessage(message),
-          },
-          ...prevRooms,
-        ];
-      });
-
-      if (room._id === roomChat?._id) {
-        setMessages((prev) => [...prev, message]);
-      }
-    };
-    getSocket().on("new_chat_user", handleNewChatUser);
-
     return () => {
       getSocket().off("receive_message", handleReceiveMessage);
       getSocket().off("receive_typing", handleReceiveTyping);
-      getSocket().off("new_chat_user", handleNewChatUser);
     };
-  }, [user?._id, roomChat?._id]);
+  }, [user?._id, room?._id]);
 
   useEffect(() => {
     const box = messageBoxRef.current;
     if (!box) return;
 
     const handleScroll = async () => {
-      if (box.scrollTop < 100 && hasMore && !loadingMore) {
+      if (box.scrollTop < 100 && !loadingMore && !loadingMessages) {
         setLoadingMore(true);
         const oldScrollHeight = box.scrollHeight;
 
-        await fetchMessages(true);
+        await fetchMessages();
 
         setTimeout(() => {
           const newScrollHeight = box.scrollHeight;
@@ -169,12 +123,12 @@ const ChatBox = () => {
     };
 
     box.addEventListener("scroll", handleScroll);
-    return () => box.removeEventListener("scroll", handleScroll);
-  }, [roomChat, hasMore, loadingMore, page]);
 
-  useEffect(() => {
-    fetchMessages(false);
-  }, [isJoinRoom, userChat]);
+    return () => {
+      box.removeEventListener("scroll", handleScroll);
+    };
+  }, [room, currentPageMessages, loadingMessages, loadingMore]);
+
   const handleChangeText = (value) => {
     const currentlyTyping = value.trim() !== "";
 
@@ -184,116 +138,60 @@ const ChatBox = () => {
     }
 
     getSocket().emit("typing", {
-      roomId: roomChat?._id,
+      roomId: room?._id,
       senderName: user.name,
       isTyping: currentlyTyping,
     });
     setText(value);
   };
 
-  const handleSetJoinRoom = async (roomId, receiverId) => {
-    setIsFirstLoad("first");
-    setIsJoinRoom(true);
-    getSocket().emit("join_room", {
-      roomId: roomId,
-      receiverId: receiverId,
-    });
-  };
-
   const handleSend = async () => {
     if (!text.trim()) return;
-    let isNewRoom = false;
-    let roomSend = roomChat;
-    if (!roomSend?._id) {
-      const { data } = await createRoomApi({
-        users: [user._id, userChat._id],
-        isGroup: false,
-        createdBy: user._id,
-      });
-      roomSend = data;
-      setRoomChat(data);
-      isNewRoom = true;
-    }
+
+    let roomSend = room;
 
     const msg = {
       message: text,
       roomId: roomSend._id,
       senderId: user._id,
-      receiverId: userChat._id,
+      receiverId: receiver._id,
       typeChat: "text",
-      isNewRoom: isNewRoom,
       senderName: user.name,
     };
-    if (!isNewRoom) {
-      getSocket().emit("typing", {
-        roomId: roomChat?._id,
-        senderName: user.name,
-        isTyping: false,
-      });
-    } else {
-      handleSetJoinRoom(roomSend._id, userChat._id);
-    }
-    getSocket().emit("send_message", msg);
-    if (isNewRoom) {
-      setRooms((prevRooms) => {
-        return [
-          {
-            ...roomSend,
-            lastMessage: parseLastMessage(msg),
-          },
-          ...prevRooms,
-        ];
-      });
-    } else {
-      sortRooms(roomSend._id, parseLastMessage(msg));
-    }
-    setIsFirstLoad("chat");
+
+    getSocket().emit("typing", {
+      roomId: room?._id,
+      senderName: user.name,
+      isTyping: false,
+    });
+
+    getSocket().emit("send_message", { room: roomSend, message: msg });
+    addRoom(roomSend, msg);
+
+    handleScrollMessage();
     setText("");
   };
   const handleUploadFiles = async (files) => {
     try {
       const uploadedFiles = await uploadFilesApi(files);
-      console.log(uploadedFiles);
       uploadedFiles.forEach((file) => {
         const msg = {
           message: file.url,
-          roomId: roomChat._id,
+          roomId: room._id,
           senderId: user._id,
-          receiverId: userChat._id,
+          receiverId: receiver._id,
           typeChat: "image",
-          isNewRoom: false,
           senderName: user.name,
         };
-        getSocket().emit("send_message", msg);
-        sortRooms(roomChat._id, parseLastMessage(msg));
+        getSocket().emit("send_message", { room: room, message: msg });
       });
     } catch (err) {
       console.error(err);
     }
   };
-  const sortRooms = (roomId, lastMessage) => {
-    setRooms((prevRooms) => {
-      const isRoomExist = prevRooms.some((room) => room._id === roomId);
-
-      let updatedRooms;
-      if (isRoomExist) {
-        updatedRooms = prevRooms.map((room) =>
-          room._id === roomId ? { ...room, lastMessage } : room
-        );
-      } else {
-        updatedRooms = [...prevRooms, { _id: roomId, lastMessage }];
-      }
-
-      return updatedRooms.sort(
-        (a, b) =>
-          new Date(b.lastMessage?.updatedAt || 0) -
-          new Date(a.lastMessage?.updatedAt || 0)
-      );
-    });
-  };
 
   const renderTyping = () => {
-    if (userTyping.isTyping) {
+    if (userTyping.isTyping && userTyping.senderName == receiver?.name) {
       return (
         <Typography variant="body2" color="primary" textAlign={"end"}>
           {userTyping.senderName} is typing...
@@ -318,27 +216,16 @@ const ChatBox = () => {
       flexDirection={"row"}
     >
       {(open || !isMobile) && (
-        <ListUserChat
-          roomChat={roomChat}
-          setUserChat={setUserChat}
-          setRoomChat={setRoomChat}
-          handleSetJoinRoom={handleSetJoinRoom}
-          setMessages={setMessages}
-          rooms={rooms}
-          open={open}
-          handleDrawer={handleDrawer}
-          setRooms={setRooms}
-          setIsFirstLoad={setIsFirstLoad}
-        />
+        <ListUserChat rooms={rooms} open={open} handleDrawer={handleDrawer} />
       )}
 
       {!open &&
-        (userChat ? (
+        (receiver && receiver._id ? (
           <Box flexGrow={1} display="flex" flexDirection="column">
             <ChatHeader
               isMobile={isMobile}
               onMenuClick={handleDrawer}
-              userChat={userChat}
+              userChat={receiver}
             />
 
             <Box
@@ -348,19 +235,18 @@ const ChatBox = () => {
               py={2}
               sx={{
                 overflowY: "auto",
-                // backgroundColor: "#f9f9f9",
                 position: "relative",
               }}
             >
               <div>
-                {loadingMore && (
+                {loadingMessages && (
                   <div className="flex justify-center items-center text-center">
                     Loading...
                     <CircularProgress size={24} style={{ marginLeft: 8 }} />
                   </div>
                 )}
               </div>
-              {messages.map((message, index) => (
+              {room.messages.map((message, index) => (
                 <ChatMessageItem
                   key={index}
                   msg={message}
@@ -368,10 +254,9 @@ const ChatBox = () => {
                   userId={user._id}
                 />
               ))}
+
+              <div>{renderTyping()}</div>
               <div ref={bottomRef} />
-              <div className="absolute bottom-0.5 right-2">
-                {renderTyping()}
-              </div>
             </Box>
 
             <ChatInput

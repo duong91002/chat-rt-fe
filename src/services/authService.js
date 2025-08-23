@@ -1,24 +1,15 @@
-import axios from "axios";
-const BASE_URL = import.meta.env.VITE_BE_URL;
-import Cookies from "js-cookie";
+import { axiosHelperPublic, axiosHelperPrivate } from "../utils/axiosHelper";
+
 export const loginApi = async (body) => {
-  const response = await axios.post(`${BASE_URL}/auth/login`, body);
+  const response = await axiosHelperPublic.post("/auth/login", body);
   return response.data;
 };
 
 export const registerApi = async (body) => {
-  const response = await axios.post(`${BASE_URL}/auth/register`, body);
+  const response = await axiosHelperPublic.post("/auth/register", body);
   return response.data;
 };
-export const getInformationApi = async (token) => {
-  try {
-    const response = await axios.get(`${BASE_URL}/auth/me`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    return response.data;
-  } catch (err) {
-    console.log(err);
-  }
+export const getInformationApi = async () => {
+  const response = await axiosHelperPrivate.get("/auth/me");
+  return response.data;
 };

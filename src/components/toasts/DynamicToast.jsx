@@ -2,7 +2,7 @@ import { Alert, Snackbar } from "@mui/material";
 import React from "react";
 import useToastStore from "../../store/toastStore";
 
-const CommonToast = () => {
+const DynamicToast = () => {
   const { open, message, severity, close } = useToastStore();
   return (
     <Snackbar
@@ -18,4 +18,4 @@ const CommonToast = () => {
   );
 };
 
-export default CommonToast;
+export default DynamicToast;

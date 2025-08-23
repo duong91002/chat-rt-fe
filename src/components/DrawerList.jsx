@@ -59,7 +59,7 @@ const StyledDrawer = styled(MuiDrawer, {
   }),
 }));
 
-const DrawerList = ({ open, handleDrawerClose, DrawerHeader }) => {
+const DrawerList = ({ open, handleDrawerOpen, DrawerHeader }) => {
   const theme = useTheme();
   const navigateConfig = getNavigateConfig();
   const navigate = useNavigate();
@@ -83,13 +83,13 @@ const DrawerList = ({ open, handleDrawerClose, DrawerHeader }) => {
     <StyledDrawer
       variant={"permanent"}
       open={open}
-      onClose={handleDrawerClose}
+      onClose={() => handleDrawerOpen(false)}
       ModalProps={{
         keepMounted: true,
       }}
     >
       <DrawerHeader>
-        <IconButton onClick={handleDrawerClose}>
+        <IconButton onClick={() => handleDrawerOpen(false)}>
           {theme.direction === "rtl" ? (
             <ChevronRightIcon />
           ) : (

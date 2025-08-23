@@ -2,7 +2,7 @@ import { Avatar, Box, Typography } from "@mui/material";
 import React from "react";
 
 const ChatMessageItem = ({ msg, userId, isMobile }) => {
-  const isMine = msg.senderId === userId;
+  const isMine = msg.senderId._id === userId;
 
   const renderContent = () => {
     if (msg.typeChat === "image") {
@@ -30,7 +30,19 @@ const ChatMessageItem = ({ msg, userId, isMobile }) => {
         />
       );
     } else {
-      return <Typography variant="body2">{msg.message}</Typography>;
+      return (
+        <Box
+          bgcolor={isMine ? "primary.main" : "grey.300"}
+          color={isMine ? "white" : "black"}
+          px={2}
+          py={1}
+          borderRadius={2}
+          maxWidth={isMobile ? 200 : 500}
+          sx={{ wordBreak: "break-word" }}
+        >
+          <Typography variant="body2">{msg.message}</Typography>
+        </Box>
+      );
     }
   };
 
@@ -44,17 +56,7 @@ const ChatMessageItem = ({ msg, userId, isMobile }) => {
         <Avatar sx={{ width: 32, height: 32, mr: 1, fontSize: 14 }} />
       )}
 
-      <Box
-        bgcolor={isMine ? "primary.main" : "grey.300"}
-        color={isMine ? "white" : "black"}
-        px={2}
-        py={1}
-        borderRadius={2}
-        maxWidth={isMobile ? 200 : 500}
-        sx={{ wordBreak: "break-word" }}
-      >
-        {renderContent()}
-      </Box>
+      {renderContent()}
 
       {isMine && (
         <Avatar

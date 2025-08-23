@@ -5,6 +5,7 @@ import {
   getInformationApi,
 } from "../services/authService";
 import Cookies from "js-cookie";
+import { loadingStore } from "../utils/loadingStore";
 
 const useAuthStore = create((set) => ({
   user: null,
@@ -13,51 +14,53 @@ const useAuthStore = create((set) => ({
   error: null,
 
   login: async (body) => {
-    set({ loading: true, error: null });
     try {
-      const { data } = await loginApi(body);
-      set({ token: data.token, loading: false });
+      const data = await loadingStore(() => loginApi(body), set);
       Cookies.set("access_token", data.token, {
         expires: 1,
         sameSite: "strict",
       });
-      return { token: data.token };
+      set({ token: data.token });
+      return { token: data.token, error: null };
     } catch (err) {
-      const errorMsg = err.response?.data?.error || "Login failed";
-      set({ error: errorMsg, loading: false });
-      return { error: errorMsg };
+      return {
+        token: null,
+        user: null,
+        error: err.response?.data?.error || "Login failed",
+      };
     }
   },
 
   register: async (body) => {
-    set({ loading: true, error: null });
     try {
-      const { data } = await registerApi(body);
-      set({ token: data.token, loading: false });
+      const data = await loadingStore(() => registerApi(body), set);
       Cookies.set("access_token", data.token, {
         expires: 1,
-        // secure: true,
         sameSite: "strict",
       });
-      return { token: data.token };
+      set({ token: data.token });
+      return { token: data.token, error: null };
     } catch (err) {
-      const errorMsg = err.response?.data?.error || "Registration failed";
-      set({ error: errorMsg, loading: false });
-      return { error: errorMsg };
+      return {
+        token: null,
+        user: null,
+        error: err.response?.data?.error || "Registration failed",
+      };
     }
   },
 
   getInformation: async () => {
     try {
-      const token = Cookies.get("access_token");
-      if (token) {
-        const { data } = await getInformationApi(token);
-        set({ user: data, loading: false });
-        return data;
-      }
-      Cookies.remove("access_token");
+      const data = await loadingStore(() => getInformationApi(), set);
+      set({ user: data });
+      return { user: data };
     } catch (err) {
       Cookies.remove("access_token");
+      return {
+        token: null,
+        user: null,
+        error: err.response?.data?.error || "Failed to fetch user information",
+      };
     }
   },
 

@@ -1,7 +1,7 @@
 import { Box, Button, Modal, Typography } from "@mui/material";
 import useModalStore from "../../store/modalStore";
 
-const CommonModal = () => {
+const DynamicModal = () => {
   const { isOpen, title, message, onConfirm, onCancel, close } =
     useModalStore();
   return (
@@ -49,4 +49,4 @@ const CommonModal = () => {
   );
 };
 
-export default CommonModal;
+export default DynamicModal;

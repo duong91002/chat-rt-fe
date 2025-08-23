@@ -3,9 +3,8 @@ import AppRoutes from "./routes";
 import "./App.css";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
-import CommonModal from "./components/modals/CommonModal";
-import CommonToast from "./components/toasts/CommonToast";
-import useNotification from "./hooks/useNotification";
+import DynamicModal from "./components/modals/DynamicModal";
+import DynamicToast from "./components/toasts/DynamicToast";
 
 const theme = createTheme({
   colorSchemes: {
@@ -16,8 +15,8 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <CommonModal />
-      <CommonToast />
+      <DynamicModal />
+      <DynamicToast />
       <AppRoutes />
     </ThemeProvider>
   );
