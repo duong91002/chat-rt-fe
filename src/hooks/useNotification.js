@@ -12,7 +12,8 @@ export function notify(title, options = {}) {
   }
 }
 
-export default function useNotification() {
+// Not a React hook: registers the socket listener that shows notifications.
+export function initNotifications() {
   const socket = getSocket();
 
   const showNotification = (title, options = {}) => {
@@ -39,3 +40,5 @@ export default function useNotification() {
     socket.off("notification");
   };
 }
+
+export default initNotifications;

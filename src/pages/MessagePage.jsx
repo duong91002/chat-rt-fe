@@ -1,4 +1,4 @@
-import React, { use, useEffect } from "react";
+import React from "react";
 import ChatBox from "../components/messages/ChatBox";
 const MessagePage = () => {
   return <ChatBox />;

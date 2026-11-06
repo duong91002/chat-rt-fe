@@ -7,7 +7,7 @@ import {
   Alert,
   Snackbar,
 } from "@mui/material";
-import React, { useState } from "react";
+import React from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
@@ -80,7 +80,7 @@ const Register = () => {
           onSubmit={async (values, { setSubmitting }) => {
             const { confirmPassword, ...submitValues } = values;
 
-            const { token, error } = await register(submitValues);
+            const { error } = await register(submitValues);
 
             setSubmitting(false);
             if (error) {

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import Cookies from "js-cookie";
 import useAuthStore from "../store/authStore";
-import useNotification from "../hooks/useNotification";
+import { initNotifications } from "../hooks/useNotification";
 const ProtectedRoute = () => {
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
@@ -22,8 +22,8 @@ const ProtectedRoute = () => {
 
       const { user } = await getInformation();
       finishAuth(!!user);
-      if (!!user) {
-        useNotification();
+      if (user) {
+        initNotifications();
       }
     };
 

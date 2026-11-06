@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import AppRoutes from "./routes";
 import "./App.css";
 import { ThemeProvider, createTheme } from "@mui/material/styles";

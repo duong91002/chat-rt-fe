@@ -7,7 +7,7 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import React, { useState } from "react";
+import React from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { useNavigate } from "react-router-dom";
@@ -51,7 +51,7 @@ const Login = () => {
           initialValues={{ email: "", password: "" }}
           validationSchema={LoginSchema}
           onSubmit={async (values, { setSubmitting }) => {
-            const { token, error } = await login(values);
+            const { error } = await login(values);
             setSubmitting(false);
 
             if (error) {
