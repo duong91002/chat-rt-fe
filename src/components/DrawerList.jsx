@@ -14,7 +14,6 @@ import Typography from "@mui/material/Typography";
 import { getNavigateConfig } from "../configs/navigateConfig";
 import { useNavigate } from "react-router-dom";
 import { Avatar, Box, Tooltip } from "@mui/material";
-import useMediaQuery from "@mui/material/useMediaQuery";
 
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import useAuthStore from "../store/authStore";
@@ -63,7 +62,6 @@ const DrawerList = ({ open, handleDrawerOpen, DrawerHeader }) => {
   const theme = useTheme();
   const navigateConfig = getNavigateConfig();
   const navigate = useNavigate();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const { user, logout } = useAuthStore();
   const confirmModal = useModalStore.getState();
 

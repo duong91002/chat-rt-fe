@@ -11,22 +11,19 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { styled, useTheme } from "@mui/material/styles";
+import { styled } from "@mui/material/styles";
 import { useColorScheme } from "@mui/material/styles";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useState } from "react";
 import DrawerList from "./DrawerList";
 import MuiAppBar from "@mui/material/AppBar";
-import useAuthStore from "../store/authStore";
-import { useNavigate } from "react-router-dom";
 
-const settings = ["Profile", "Logout"];
 const drawerWidth = 240;
 
 const Header = ({ DrawerHeader }) => {
   const { mode, setMode } = useColorScheme();
-  if (!mode) return null;
   const [open, setOpen] = useState(false);
+  if (!mode) return null;
   const handleDrawerOpen = (isOpen) => {
     setOpen(isOpen);
   };
